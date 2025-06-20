@@ -1,27 +1,28 @@
 use std::io::{self, Write};
-use std::process::Command;
+use crate::password_manager;
+use crate::random_generator::generate_password;
 
 pub fn run_cli() {
-    loop {
-        clear_screen(); // Efface l'écran au début de chaque itération
+    let path = "data.json";
 
+    loop {
         println!("\nGestionnaire de mots de passe");
         println!("1. Générer un mot de passe");
-        println!("2. Afficher les mots de passe");
-        println!("3. Quitter");
+        println!("2. Ajouter un mot de passe");
+        println!("3. Afficher un mot de passe");
+        println!("4. Supprimer un mot de passe");
+        println!("5. Quitter");
 
         let choice = match get_user_input("Veuillez entrer votre choix:") {
             Ok(input) => match input.trim().parse::<u32>() {
                 Ok(num) => num,
                 Err(_) => {
                     println!("Veuillez entrer un nombre valide.");
-                    pause_and_clear();
                     continue;
                 }
             },
             Err(e) => {
                 println!("Erreur: {}", e);
-                pause_and_clear();
                 continue;
             }
         };
@@ -33,33 +34,37 @@ pub fn run_cli() {
                 }
             },
             2 => {
-                if let Err(e) = display_passwords() {
-                    println!("Erreur lors de l'affichage des mots de passe: {}", e);
+                let username = get_user_input("Entrez le nom d'utilisateur:").unwrap().trim().to_string();
+                let password = get_user_input("Entrez le mot de passe:").unwrap().trim().to_string();
+                if let Err(e) = password_manager::add_password(&username, &password, path) {
+                    println!("Erreur lors de l'ajout du mot de passe: {}", e);
+                } else {
+                    println!("Mot de passe ajouté avec succès.");
                 }
             },
             3 => {
+                let username = get_user_input("Entrez le nom d'utilisateur:").unwrap().trim().to_string();
+                match password_manager::get_password(&username, path) {
+                    Ok(Some(password)) => println!("Mot de passe: {}", password),
+                    Ok(None) => println!("Utilisateur non trouvé."),
+                    Err(e) => println!("Erreur lors de la récupération du mot de passe: {}", e),
+                }
+            },
+            4 => {
+                let username = get_user_input("Entrez le nom d'utilisateur à supprimer:").unwrap().trim().to_string();
+                if let Err(e) = password_manager::delete_password(&username, path) {
+                    println!("Erreur lors de la suppression du mot de passe: {}", e);
+                } else {
+                    println!("Utilisateur supprimé avec succès.");
+                }
+            },
+            5 => {
                 println!("Au revoir!");
                 break;
             },
             _ => println!("Option non valide, veuillez réessayer."),
         }
-
-        pause_and_clear();
     }
-}
-
-fn clear_screen() {
-    if cfg!(target_os = "windows") {
-        Command::new("cmd").args(&["/C", "cls"]).status().unwrap();
-    } else {
-        Command::new("clear").status().unwrap();
-    }
-}
-
-fn pause_and_clear() {
-    println!("Appuyez sur Entrée pour continuer...");
-    let _ = io::stdin().read_line(&mut String::new());
-    clear_screen();
 }
 
 fn get_user_input(prompt: &str) -> io::Result<String> {
@@ -83,17 +88,8 @@ fn generate_password_cli() -> io::Result<()> {
         }
     };
 
-    let password = crate::random_generator::generate_password(length);
+    let password = generate_password(length);
     println!("Mot de passe généré: {}", password);
-
-    Ok(())
-}
-
-fn display_passwords() -> io::Result<()> {
-    println!("Affichage des mots de passe stockés:");
-    println!("1. Mot de passe pour exemple.com: Ex@mple1");
-    println!("2. Mot de passe pour test.com: T3st!ng2");
-    println!("3. Mot de passe pour demo.com: D3m0P@ss");
 
     Ok(())
 }

@@ -27,6 +27,7 @@
 
 mod cli;
 mod random_generator;
+mod password_manager;
 
 fn main() {
     cli::run_cli();
