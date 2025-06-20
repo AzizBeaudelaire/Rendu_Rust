@@ -74,8 +74,6 @@ pub fn validate_password_mt(password: &str) -> Result<(), Vec<&'static str>> {
     } else {
         Err(errors)
     }
-    let password = generate_password(16);
-    println!(" Mot de passe généré : {password}");S
 }
 
 
