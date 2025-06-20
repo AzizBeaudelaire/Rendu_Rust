@@ -1,7 +1,10 @@
 use std::io::{self, Write};
+use std::process::Command;
 
 pub fn run_cli() {
     loop {
+        clear_screen(); // Efface l'écran au début de chaque itération
+
         println!("\nGestionnaire de mots de passe");
         println!("1. Générer un mot de passe");
         println!("2. Afficher les mots de passe");
@@ -12,11 +15,13 @@ pub fn run_cli() {
                 Ok(num) => num,
                 Err(_) => {
                     println!("Veuillez entrer un nombre valide.");
+                    pause_and_clear();
                     continue;
                 }
             },
             Err(e) => {
                 println!("Erreur: {}", e);
+                pause_and_clear();
                 continue;
             }
         };
@@ -38,7 +43,23 @@ pub fn run_cli() {
             },
             _ => println!("Option non valide, veuillez réessayer."),
         }
+
+        pause_and_clear();
     }
+}
+
+fn clear_screen() {
+    if cfg!(target_os = "windows") {
+        Command::new("cmd").args(&["/C", "cls"]).status().unwrap();
+    } else {
+        Command::new("clear").status().unwrap();
+    }
+}
+
+fn pause_and_clear() {
+    println!("Appuyez sur Entrée pour continuer...");
+    let _ = io::stdin().read_line(&mut String::new());
+    clear_screen();
 }
 
 fn get_user_input(prompt: &str) -> io::Result<String> {
@@ -69,7 +90,6 @@ fn generate_password_cli() -> io::Result<()> {
 }
 
 fn display_passwords() -> io::Result<()> {
-    // Simuler l'affichage des mots de passe
     println!("Affichage des mots de passe stockés:");
     println!("1. Mot de passe pour exemple.com: Ex@mple1");
     println!("2. Mot de passe pour test.com: T3st!ng2");
